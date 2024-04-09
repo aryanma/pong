@@ -1,0 +1,33 @@
+#include <Wire.h>
+#include <AccelStepper.h>
+
+// Motor pin definitions
+#define motorPin1  8
+#define motorPin2  9
+#define motorPin3  10
+#define motorPin4  11
+
+// Create stepper object
+AccelStepper stepper(AccelStepper::FULL4WIRE, motorPin1, motorPin3, motorPin2, motorPin4);
+
+void setup() {
+  Wire.begin(0x04); // Start I2C with this slave address
+  Wire.onReceive(receiveEvent); // Register event
+  stepper.setMaxSpeed(1000);
+  stepper.setAcceleration(500);
+  Serial.begin(9600); // Start serial for debugging
+}
+
+void loop() {
+  // Must call this for constant stepper motion
+  stepper.run();
+}
+
+void receiveEvent(int howMany) {
+  if (howMany >= 3) {
+    int steps = Wire.read() << 8;
+    steps |= Wire.read();
+    int direction = Wire.read();
+    stepper.move(direction ? steps : -steps);
+  }
+}
