@@ -1,0 +1,33 @@
+#include <Wire.h>
+
+// I2C addresses for slave Arduinos
+#define SLAVE_LEFT_PADDLE_ADDRESS 0x04
+#define SLAVE_RIGHT_PADDLE_ADDRESS 0x05
+
+void setup() {
+  Wire.begin(); // Start I2C as master
+  Serial.begin(9600); // Start serial for debugging
+  
+  // Initialize other components (LEDs, buttons, OLED, etc.)
+}
+
+void loop() {
+  // Game logic here
+
+  // Example of moving left paddle up
+  int steps = 100; // Number of steps to move
+  bool direction = true; // true = up, false = down
+  moveStepper(SLAVE_LEFT_PADDLE_ADDRESS, steps, direction);
+  
+  delay(1000); // Simulate game time
+
+  // More game logic
+}
+
+void moveStepper(byte slaveAddress, int steps, bool direction) {
+  Wire.beginTransmission(slaveAddress);
+  Wire.write((byte)(steps >> 8)); // MSB
+  Wire.write((byte)(steps & 0xFF)); // LSB
+  Wire.write(direction ? 1 : 0); // Direction
+  Wire.endTransmission();
+}
