@@ -3,8 +3,14 @@
 #define SLAVE1_ADDRESS 1
 #define SLAVE2_ADDRESS 2
 
+//Units in in
+#define WIDTH 15.5
+#define HEIGHT 10.5
+
+
 int slider1 = 0;
 int slider2 = 0;
+
 int ballX = 0;
 int ballY = 0;
 
