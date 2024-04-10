@@ -1,0 +1,4 @@
+{
+    "sketch": "pong_stepper_control.ino",
+    "board": "arduino:avr:uno"
+}
