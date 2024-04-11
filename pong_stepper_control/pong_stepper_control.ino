@@ -10,31 +10,49 @@
 AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin);
 
 void setup() {
+  // Initialize serial communication at 9600 bits per second
+  Serial.begin(9600);
+
   // Set up the stepper
   stepper.setMaxSpeed(1000); // Max speed in steps per second, adjust as necessary
-  stepper.setAcceleration(0); // Acceleration in steps per second squared, adjust as necessary
+  stepper.setAcceleration(100); // Adjust as necessary to smooth out the movement
   
   // Optionally reset the position to zero at startup
   stepper.setCurrentPosition(0);
+
+  // Move the stepper to the first target position
+  stepper.moveTo(400); // Move to 400 steps
+  stepper.runToPosition(); // This is a blocking call
+  Serial.print("Reached Position 400: ");
+  Serial.println(stepper.currentPosition());
+
+  // Start the non-blocking movement sequence
+  stepper.moveTo(200); // Next target is 200 steps
 }
 
 void loop() {
-  // Calculate the absolute target positions
-  static int targetPosition = 0;  // This will keep track of the next target position
+  // Run the stepper motor without blocking
+  stepper.run();
 
-  // Move the stepper 2 revolutions forward
-  targetPosition += 2 * STEPS_PER_REVOLUTION;  // Add 2 revolutions worth of steps
-  stepper.moveTo(targetPosition);
-  stepper.runToPosition(); // Block until the stepper reaches the position
+  // Check if the stepper has reached the intermediate target position of 200 steps
+  if (stepper.distanceToGo() == 0 && stepper.currentPosition() == 200) {
+    Serial.print("Reached Position 200: ");
+    Serial.println(stepper.currentPosition());
+    stepper.moveTo(0); // Set the next target to 0 steps
+  }
 
-  delay(1000); // Wait for a second
+  // Check if the stepper has reached the final target position of 0 steps
+  if (stepper.distanceToGo() == 0 && stepper.currentPosition() == 0) {
+    Serial.print("Reached Position 0: ");
+    Serial.println(stepper.currentPosition());
+    // Optionally, you can reset the sequence or stop the motor here
+    delay(1000); // Wait a second before any next actions
 
-  // Move the stepper 1 revolution backward
-  targetPosition -= 1 * STEPS_PER_REVOLUTION;  // Subtract 1 revolution worth of steps
-  stepper.moveTo(targetPosition);
-  stepper.runToPosition(); // Block until the stepper reaches the position
-
-  delay(1000); // Wait for a second
-
-  // The loop will continue to repeat this sequence
+    // Reset the sequence to start over
+    stepper.moveTo(400); // Move to 400 steps
+    stepper.runToPosition(); // This is a blocking call
+    Serial.print("Reached Position 400: ");
+    Serial.println(stepper.currentPosition());
+    stepper.moveTo(200); // Next target is 200 steps
+  }
 }
