@@ -17,17 +17,29 @@
 #define stepPinBottom 3
 #define dirPinBottom 6
 
+#define stepPinP1 4
+#define dirPinP1 7
+#define stepPinP2 9
+#define dirPinP2 8
+
 #define STEPS_PER_REVOLUTION 200
-#define DISTANCE_PER_REVOLUTION 15.24 * 3.14159
+#define MAXSPEED 1000
+#define ACCELERATION 700
 
 // Initialize the stepper
 AccelStepper top(AccelStepper::DRIVER, stepPinTop, dirPinTop);
 AccelStepper bottom(AccelStepper::DRIVER, stepPinBottom, dirPinBottom);
+AccelStepper p1(AccelStepper::DRIVER, stepPinP1, dirPinP1);
+AccelStepper p2(AccelStepper::DRIVER, stepPinP2, dirPinP2);
+
+#define DISTANCE_PER_REVOLUTION 15.24 * 3.14159
 
 int topString = 0;
 int bottomString = 0;
-int ballX = 0;
-int ballY = 0;
+float ballX = 0;
+float ballY = 0;
+float p2Dist = 0;
+float p1Dist = 0;
 
 
 void calculateStringLengths(int x, int y) {
@@ -55,22 +67,38 @@ void setup() {
   bottom.setMaxSpeed(MAXSPEED);          // Max speed in steps per second, adjust as necessary
   bottom.setAcceleration(ACCELERATION);  // Adjust as necessary to smooth out the movement
 
+  p1.setMaxSpeed(MAXSPEED);          // Max speed in steps per second, adjust as necessary
+  p1.setAcceleration(ACCELERATION);  // Adjust as necessary to smooth out the movement
+
+  p2.setMaxSpeed(MAXSPEED);          // Max speed in steps per second, adjust as necessary
+  p2.setAcceleration(ACCELERATION);  // Adjust as necessary to smooth out the movement
+
   // Optionally reset the position to zero at startup
   top.setCurrentPosition(0);
   bottom.setCurrentPosition(0);
+  p1.setCurrentPosition(0);
+  p2.setCurrentPosition(0);
 
   //top.moveTo(200);
   //bottom.moveTo(1000);
 }
 
 void loop() {
+  //Move motors
   top.run();
   bottom.run();
+  p1.run();
+  p2.run();
 
   top.moveTo(ballX);
   bottom.moveTo(ballY);
 
+  p1.moveTo(p1Dist);
+  p2.moveTo(p2Dist);
+
   Serial.println(topString);
+
+  updateGameState();
 
 
   Serial.print("Top Goal: ");
@@ -86,13 +114,6 @@ void loop() {
   delay(FDELAY);
 }
 
-void receiveEvent(int numBytes) {
-  Serial.println("Received Event");
-    ballX = Wire.read();
-    ballY = Wire.read();
-    Serial.print(ballX);
-    Serial.print(ballY);
-    Serial.println(" :)");
-    calculateStringLengths(ballX, ballY);
+void updateGameState(){
   
 }
