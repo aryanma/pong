@@ -1,8 +1,8 @@
 #include <AccelStepper.h>
 #include "PinChangeInterrupt.h"
-#define CLK 2
-#define DT 3
-#define SW 4
+#define CLK 10
+#define DT 11
+#define SW 12
 
 int counter = 0;
 int currentState;
@@ -22,8 +22,8 @@ void setup() {
   initState = digitalRead(CLK);
 
   // Call encoder_value() when any high/low changed seen on interrupt 0 (pin 2), or interrupt 1 (pin 3)
-  attachInterrupt(0, encoder_value, CHANGE);
-  attachInterrupt(1, encoder_value, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(10), encoder_value, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(11), encoder_value, CHANGE);
   attachPCINT(digitalPinToPCINT(SW), button_press, CHANGE);
 }
 
@@ -47,7 +47,7 @@ void button_press()
 void encoder_value() {
   // Read the current state of CLK
   currentState = digitalRead(CLK);
-
+  Serial.println("Encoder value called");
   // If last and current state of CLK are different, then we can be sure that the pulse occurred
   if (currentState != initState  && currentState == 1) {
     // Encoder is rotating counterclockwise so we decrement the counter

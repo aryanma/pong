@@ -1,10 +1,29 @@
 #include <AccelStepper.h>
+#include "PinChangeInterrupt.h"
 
 #define FDELAY 100
 
+#define CLK1 10
+#define DT1 11
+#define SW1 12
+
+#define CLK2 5
+#define DT2 6
+#define SW2 7
+
+unsigned long debounceDelay1 = 0;
+unsigned long debounceDelay2 = 0;
+
+int init1;
+int init2;
+
+
 //Units in mm
-#define WIDTH 394
-#define HEIGHT 267
+//#define WIDTH 394
+//#define HEIGHT 267
+
+#define HEIGHT 394
+#define WIDTH 267
 
 // Define pin connections
 #define stepPinTop 2
@@ -18,8 +37,8 @@
 #define dirPinP2 8
 
 #define STEPS_PER_REVOLUTION 200
-#define MAXSPEED 2000
-#define ACCELERATION 1000
+#define MAXSPEED 200
+#define ACCELERATION 200
 
 #define DISTANCE_PER_REVOLUTION (15.24 * 3.14159)
 
@@ -47,6 +66,7 @@ double p1DistN = 0;
 
 //x, y in mm
 void calculateStringLengths(int x, int y) {
+
     // Where we flip so that x correspodns to y_real and y corresponds to x_real
     // This orietnation has topStringLength corresponding to motor at (0,0) and bottomStringLength corresponding to motor at (0,gameHeight)
     //X increases from right to left (motor on right) and Y increases from top to bottom
@@ -64,9 +84,79 @@ void calculateStringLengths(int x, int y) {
     setPlotterMotors(topGoal, bottomGoal);
 }
 
+//Paddle stuff
+void paddle1_value(){
+    int new1 = digitalRead(CLK1);
+    if (init1 != new1) {
+        if (digitalRead(DT1) != new1) {
+            p1DistN++;
+        } else {
+            p1DistN--;
+        }
+
+        Serial.print("Paddle 1: ");
+        Serial.println(p1DistN);
+    }
+    init1 = new1;
+}
+
+void paddle2_value(){
+    int new2 = digitalRead(CLK2);
+    if (init2 != new2) {
+        if (digitalRead(DT2) != new2) {
+            p2DistN++;
+        } else {
+            p2DistN--;
+        }
+
+        Serial.print("Paddle 2: ");
+        Serial.println(p2DistN);
+    }
+    init2 = new2;
+}
+
+void button_press1() {
+    int buttonVal = digitalRead(SW1);
+    //If we detect LOW signal, button is pressed
+    if (buttonVal == LOW) {
+        if (millis() - debounceDelay1 > 200) {
+            Serial.println("Button 1 pressed!");
+        }
+        debounceDelay1 = millis();
+    }
+}
+
+void button_press2() {
+    int buttonVal = digitalRead(SW2);
+    //If we detect LOW signal, button is pressed
+    if (buttonVal == LOW) {
+        if (millis() - debounceDelay2 > 200) {
+            Serial.println("Button 2 pressed!");
+        }
+        debounceDelay2 = millis();
+    }
+}
 
 void setup() {
   Serial.begin(9600);
+
+  //Paddle stuff
+    pinMode(CLK1, INPUT);
+    pinMode(DT1, INPUT);
+    pinMode(SW1, INPUT_PULLUP);
+    
+    pinMode(CLK2, INPUT);
+    pinMode(DT2, INPUT);
+    pinMode(SW2, INPUT_PULLUP);
+
+    init1 = digitalRead(CLK1);
+    init2 = digitalRead(CLK2);
+
+    attachInterrupt(digitalPinToInterrupt(CLK1), paddle1_value, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(CLK2), paddle2_value, CHANGE);
+    attachPCINT(digitalPinToPCINT(SW1), button_press1, CHANGE);
+    attachPCINT(digitalPinToPCINT(SW2), button_press2, CHANGE);
+
 
   // Set up the steppers
   top.setMaxSpeed(MAXSPEED);          // Max speed in steps per second, adjust as necessary
@@ -86,24 +176,32 @@ void setup() {
   bottom.setCurrentPosition(0);
   p1.setCurrentPosition(0);
   p2.setCurrentPosition(0);
+
+  calculateStringLengths(0,100);    
 }
 
 
 int i = 0;
+int toggle = 0;
 
 void loop() {
-    i++;
-
-    if(i % 10000 == 0){
-        calculateStringLengths(i/100, i/100);
-    }
-
+    /* 
   //Move motors
   top.run();
   bottom.run();
   p1.run();
   p2.run();
 
+  if (millis() - i > 2000 && millis() - i < 4000) {
+    calculateStringLengths(0,200);
+  }else if(millis() - i > 4000 && millis() - i < 6000){
+    calculateStringLengths(200,200);
+  }else if(millis() - i > 6000 && millis() - i < 8000){
+    calculateStringLengths(200,0);
+  }else if (millis() - i > 8000) {
+    calculateStringLengths(0,0);
+    i = millis();
+}
   
   //Update goals
   if(topStringN != topStringL || bottomStringN != bottomStringL || p1DistN != p1DistL || p2DistN != p2DistL){
@@ -126,6 +224,8 @@ void loop() {
 
   updateGameState();
 
+  */
+
 }
 
 
@@ -140,13 +240,6 @@ void updateGameState(){
         Serial.println(y);
 
         calculateStringLengths(x, y);
-
-        /*
-        if(x == 'a'){
-            setPlotterMotors(200, 200);
-        }else if(x == 'b'){
-            setPlotterMotors(0, 0);
-        }*/
     }
 }
 
