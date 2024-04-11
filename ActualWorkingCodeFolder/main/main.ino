@@ -18,12 +18,10 @@ void updateBallPosition(int x, int y){
 }
 
 void loop(){
-    delay(FDELAY);
+    //delay(FDELAY*5);
     i++;
-    if(i == 20){
-      Serial.println("Hit it");
-      updateBallPosition(50, 50);
-    }
+    updateBallPosition(400,400);
+    //Serial.println(i*5);
 }
 
 void getPositionFromSerial(){
