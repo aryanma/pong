@@ -21,7 +21,7 @@
 #define MAXSPEED 2000
 #define ACCELERATION 1000
 
-#define DISTANCE_PER_REVOLUTION 15.24 * 3.14159
+#define DISTANCE_PER_REVOLUTION (15.24 * 3.14159)
 
 
 int cycle = 0;
@@ -34,27 +34,34 @@ AccelStepper p2(AccelStepper::DRIVER, stepPinP2, dirPinP2);
 
 
 //Old values
-int topStringL = 0;
-int bottomStringL = 0;
-float p2DistL = 0;
-float p1DistL = 0;
+double topStringL = 0;
+double bottomStringL = 0;
+double p2DistL = 0;
+double p1DistL = 0;
 
 //New values
-int topStringN = 0;
-int bottomStringN = 0;
-float p2DistN = 0;
-float p1DistN = 0;
+double topStringN = 0;
+double bottomStringN = 0;
+double p2DistN = 0;
+double p1DistN = 0;
 
+//x, y in mm
 void calculateStringLengths(int x, int y) {
-  // Where we flip so that x correspodns to y_real and y corresponds to x_real
-  // This orietnation has topStringLength corresponding to motor at (0,0) and bottomStringLength corresponding to motor at (0,gameHeight)
-  //X increases from right to left (motor on right) and Y increases from top to bottom
-  int topStringLength = sqrt(x * x + y * y);
-  int bottomStringLength = sqrt((HEIGHT - y) * (HEIGHT - y) + x * x);
+    // Where we flip so that x correspodns to y_real and y corresponds to x_real
+    // This orietnation has topStringLength corresponding to motor at (0,0) and bottomStringLength corresponding to motor at (0,gameHeight)
+    //X increases from right to left (motor on right) and Y increases from top to bottom
+    int topStringLength = sqrt(x * x + y * y);
+    int bottomStringLength = sqrt((HEIGHT - y) * (HEIGHT - y) + x * x);
 
-  topStringN = topStringLength * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION);
-  bottomStringN = bottomStringLength * STEPS_PER_REVOLUTION * DISTANCE_PER_REVOLUTION;
-  Serial.println("Set strings");
+    int topGoal = topStringLength * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION);
+    int bottomGoal = bottomStringLength * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION);
+
+    Serial.print("New goals: ");
+    Serial.print(topGoal);
+    Serial.print(" ");
+    Serial.println(bottomGoal);
+
+    setPlotterMotors(topGoal, bottomGoal);
 }
 
 
@@ -81,7 +88,16 @@ void setup() {
   p2.setCurrentPosition(0);
 }
 
+
+int i = 0;
+
 void loop() {
+    i++;
+
+    if(i % 10000 == 0){
+        calculateStringLengths(i/100, i/100);
+    }
+
   //Move motors
   top.run();
   bottom.run();
@@ -89,6 +105,7 @@ void loop() {
   p2.run();
 
   
+  //Update goals
   if(topStringN != topStringL || bottomStringN != bottomStringL || p1DistN != p1DistL || p2DistN != p2DistL){
     Serial.println("Setting new positions");
     topStringL = topStringN;
@@ -105,32 +122,31 @@ void loop() {
     Serial.println(topStringL);
   }
 
+
+
   updateGameState();
 
-
-  //Serial.print("Top Goal: ");
-  //Serial.println(topStringL);
-
-  //Serial.print("Top Current Position: ");
-  //Serial.println(top.currentPosition());
-
-  //Serial.print("Bottom Current Position: ");
-  //Serial.println(bottom.currentPosition());
-  
-
- // delay(FDELAY);
 }
 
 
 void updateGameState(){
     if (Serial.available() >= 2) {
-        char x = Serial.read();
-        char y = Serial.read();
+        int x = Serial.read();
+        int y = Serial.read();
+
+        Serial.print("Received: ");
+        Serial.print(x);
+        Serial.print(" ");
+        Serial.println(y);
+
+        calculateStringLengths(x, y);
+
+        /*
         if(x == 'a'){
             setPlotterMotors(200, 200);
         }else if(x == 'b'){
             setPlotterMotors(0, 0);
-        }
+        }*/
     }
 }
 
