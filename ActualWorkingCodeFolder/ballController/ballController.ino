@@ -3,9 +3,9 @@
 
 #define ADDRESS 1
 #define MAXSPEED 1000
-#define ACCELERATION 100
+#define ACCELERATION 700
 
-#define FDELAY 100
+#define FDELAY 1
 
 //Units in mm
 #define WIDTH 394
@@ -22,10 +22,12 @@
 
 // Initialize the stepper
 AccelStepper top(AccelStepper::DRIVER, stepPinTop, dirPinTop);
-//AccelStepper bottom(AccelStepper::DRIVER, stepPinBottom, dirPinBottom);
+AccelStepper bottom(AccelStepper::DRIVER, stepPinBottom, dirPinBottom);
 
 int topString = 0;
 int bottomString = 0;
+int ballX = 0;
+int ballY = 0;
 
 
 void calculateStringLengths(int x, int y) {
@@ -50,27 +52,27 @@ void setup() {
   top.setMaxSpeed(MAXSPEED);          // Max speed in steps per second, adjust as necessary
   top.setAcceleration(ACCELERATION);  // Adjust as necessary to smooth out the movement
 
-  //bottom.setMaxSpeed(MAXSPEED);          // Max speed in steps per second, adjust as necessary
-  //bottom.setAcceleration(ACCELERATION);  // Adjust as necessary to smooth out the movement
+  bottom.setMaxSpeed(MAXSPEED);          // Max speed in steps per second, adjust as necessary
+  bottom.setAcceleration(ACCELERATION);  // Adjust as necessary to smooth out the movement
 
   // Optionally reset the position to zero at startup
   top.setCurrentPosition(0);
-  //bottom.setCurrentPosition(0);
+  bottom.setCurrentPosition(0);
 
-  top.moveTo(200);
-//  bottom.moveTo(1000);
+  //top.moveTo(200);
+  //bottom.moveTo(1000);
 }
 
 void loop() {
   top.run();
-  //bottom.run();
+  bottom.run();
 
-  //top.moveTo(topString);
-  //bottom.moveTo(bottomString);
+  top.moveTo(ballX);
+  bottom.moveTo(ballY);
 
   Serial.println(topString);
 
-/*
+
   Serial.print("Top Goal: ");
   Serial.println(topString);
 
@@ -79,15 +81,15 @@ void loop() {
 
   Serial.print("Bottom Current Position: ");
   Serial.println(bottom.currentPosition());
-  */
+  
 
   delay(FDELAY);
 }
 
 void receiveEvent(int numBytes) {
   Serial.println("Received Event");
-    int ballX = Wire.read();
-    int ballY = Wire.read();
+    ballX = Wire.read();
+    ballY = Wire.read();
     Serial.print(ballX);
     Serial.print(ballY);
     Serial.println(" :)");
