@@ -17,6 +17,9 @@ unsigned long debounceDelay2 = 0;
 int init1;
 int init2;
 
+int p1Encoder = 0;
+int p2Encoder = 0;
+
 
 //Units in mm
 //#define WIDTH 394
@@ -85,17 +88,30 @@ void calculateStringLengths(int x, int y) {
 }
 
 //Paddle stuff
+
+//20 = 1 rotation on encoder
 void paddle1_value(){
     int new1 = digitalRead(CLK1);
     if (init1 != new1) {
         if (digitalRead(DT1) != new1) {
-            p1DistN++;
+            p1Encoder++;
         } else {
-            p1DistN--;
+            p1Encoder--;
         }
 
+        if(p1Encoder < 0){
+            p1Encoder = 0;
+        }
+
+        if(p1Encoder > 50){
+            p1Encoder = 50;
+        }
+
+        //CHANGE THIS BACK TO 1
+        p2DistN = -1 * p1Encoder * 10;
+
         Serial.print("Paddle 1: ");
-        Serial.println(p1DistN);
+        Serial.println(p1Encoder);
     }
     init1 = new1;
 }
@@ -104,13 +120,22 @@ void paddle2_value(){
     int new2 = digitalRead(CLK2);
     if (init2 != new2) {
         if (digitalRead(DT2) != new2) {
-            p2DistN++;
+            p2Encoder++;
         } else {
-            p2DistN--;
+            p2Encoder--;
+        }
+        if(p2Encoder < 0){
+            p2Encoder = 0;
         }
 
+        if(p2Encoder > 50){
+            p2Encoder = 50;
+        }
+
+        p2DistN = -1 * p2Encoder * 10;
+
         Serial.print("Paddle 2: ");
-        Serial.println(p2DistN);
+        Serial.println(p2Encoder);
     }
     init2 = new2;
 }
@@ -152,8 +177,10 @@ void setup() {
     init1 = digitalRead(CLK1);
     init2 = digitalRead(CLK2);
 
-    attachInterrupt(digitalPinToInterrupt(CLK1), paddle1_value, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(CLK2), paddle2_value, CHANGE);
+    attachPCINT(digitalPinToPCINT(CLK1), paddle1_value, CHANGE);
+    attachPCINT(digitalPinToPCINT(CLK2), paddle2_value, CHANGE);
+    attachPCINT(digitalPinToPCINT(DT1), paddle1_value, CHANGE);
+    attachPCINT(digitalPinToPCINT(DT2), paddle2_value, CHANGE);
     attachPCINT(digitalPinToPCINT(SW1), button_press1, CHANGE);
     attachPCINT(digitalPinToPCINT(SW2), button_press2, CHANGE);
 
@@ -177,7 +204,7 @@ void setup() {
   p1.setCurrentPosition(0);
   p2.setCurrentPosition(0);
 
-  calculateStringLengths(0,100);    
+  //calculateStringLengths(0,100);    
 }
 
 
@@ -185,13 +212,29 @@ int i = 0;
 int toggle = 0;
 
 void loop() {
-    /* 
+
   //Move motors
   top.run();
   bottom.run();
   p1.run();
   p2.run();
 
+
+/*
+  if((millis() % 10000) - i > 1000){
+    i = millis() % 10000;
+    toggle = !toggle;
+    if(toggle){
+        p1DistN = 100;
+        p2DistN = 100;
+    }else{
+        p1DistN = 0;
+        p2DistN = 0;
+    }
+  
+  }*/
+
+/*
   if (millis() - i > 2000 && millis() - i < 4000) {
     calculateStringLengths(0,200);
   }else if(millis() - i > 4000 && millis() - i < 6000){
@@ -201,7 +244,7 @@ void loop() {
   }else if (millis() - i > 8000) {
     calculateStringLengths(0,0);
     i = millis();
-}
+}*/
   
   //Update goals
   if(topStringN != topStringL || bottomStringN != bottomStringL || p1DistN != p1DistL || p2DistN != p2DistL){
@@ -214,17 +257,17 @@ void loop() {
     top.moveTo(topStringL);
     bottom.moveTo(bottomStringL);
 
-    p1.moveTo(p1DistL);
+    //p1.moveTo(p1DistL);
     p2.moveTo(p2DistL);
 
-    Serial.println(topStringL);
+    Serial.println(p1DistL);
+    Serial.print("P1 currently at ");
+    Serial.println(p1.currentPosition());
   }
 
 
 
-  updateGameState();
-
-  */
+  //updateGameState();
 
 }
 
