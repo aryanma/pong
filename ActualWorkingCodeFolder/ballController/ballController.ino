@@ -7,9 +7,9 @@
 #define DT1 11
 #define SW1 12
 
-#define CLK2 5
-#define DT2 6
-#define SW2 7
+#define CLK2 A0
+#define DT2 A1
+#define SW2 A2
 
 unsigned long debounceDelay1 = 0;
 unsigned long debounceDelay2 = 0;
@@ -35,7 +35,7 @@ int p2Encoder = 0;
 #define dirPinBottom 6
 
 #define stepPinP1 4
-#define dirPinP1 7
+#define dirPinP1 13
 #define stepPinP2 9
 #define dirPinP2 8
 
@@ -108,7 +108,7 @@ void paddle1_value(){
         }
 
         //CHANGE THIS BACK TO 1
-        p2DistN = -1 * p1Encoder * 10;
+        p1DistN = -1 * p1Encoder * 10;
 
         Serial.print("Paddle 1: ");
         Serial.println(p1Encoder);
@@ -257,7 +257,7 @@ void loop() {
     top.moveTo(topStringL);
     bottom.moveTo(bottomStringL);
 
-    //p1.moveTo(p1DistL);
+    p1.moveTo(p1DistL);
     p2.moveTo(p2DistL);
 
     Serial.println(p1DistL);
