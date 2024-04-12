@@ -20,6 +20,9 @@ int init2;
 int p1Encoder = 0;
 int p2Encoder = 0;
 
+//GAME STUFF
+#define paddleSpeed 5
+
 
 //Units in mm
 //#define WIDTH 394
@@ -29,7 +32,7 @@ int p2Encoder = 0;
 #define WIDTH 267
 
 // Define pin connections
-#define stepPinTop 2
+#define stepPinTop 7
 #define dirPinTop 5
 #define stepPinBottom 3
 #define dirPinBottom 6
@@ -44,6 +47,10 @@ int p2Encoder = 0;
 #define ACCELERATION 200
 
 #define DISTANCE_PER_REVOLUTION (15.24 * 3.14159)
+
+#define startStrLength 238
+
+#define startStep (startStrLength * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION))
 
 
 int cycle = 0;
@@ -67,6 +74,17 @@ double bottomStringN = 0;
 double p2DistN = 0;
 double p1DistN = 0;
 
+//GAME VARIABLES
+// ball movement
+int ballSpeedX = 10;
+int ballSpeedY = 10;
+
+int ballY = HEIGHT / 2;
+int ballX = WIDTH/2;
+
+int playerScore = 0;
+int opponentScore = 0;
+
 //x, y in mm
 void calculateStringLengths(int x, int y) {
 
@@ -87,10 +105,10 @@ void calculateStringLengths(int x, int y) {
         bottomGoal = 0;
     }
 
-    Serial.print("New goals: ");
-    Serial.print(topGoal);
-    Serial.print(" ");
-    Serial.println(bottomGoal);
+    //Serial.print("New goals: ");
+    //Serial.print(topGoal);
+    //Serial.print(" ");
+    //Serial.println(bottomGoal);
 
     setPlotterMotors(topGoal, bottomGoal);
 }
@@ -118,8 +136,8 @@ void paddle1_value(){
         //CHANGE THIS BACK TO 1
         p1DistN = -1 * p1Encoder * 10;
 
-        Serial.print("Paddle 1: ");
-        Serial.println(p1Encoder);
+        //Serial.print("Paddle 1: ");
+        //Serial.println(p1Encoder);
     }
     init1 = new1;
 }
@@ -142,8 +160,7 @@ void paddle2_value(){
 
         p2DistN = -1 * p2Encoder * 10;
 
-        Serial.print("Paddle 2: ");
-        Serial.println(p2Encoder);
+        //Serial.print("Paddle 2: ");
     }
     init2 = new2;
 }
@@ -207,8 +224,8 @@ void setup() {
   p2.setAcceleration(ACCELERATION);  // Adjust as necessary to smooth out the movement
 
   // Optionally reset the position to zero at startup
-  top.setCurrentPosition(0);
-  bottom.setCurrentPosition(0);
+  top.setCurrentPosition(startStep);
+  bottom.setCurrentPosition(-1*startStep);
   p1.setCurrentPosition(0);
   p2.setCurrentPosition(0);
 
@@ -258,7 +275,7 @@ void loop() {
   
   //Update goals
   if(topStringN != topStringL || bottomStringN != bottomStringL || p1DistN != p1DistL || p2DistN != p2DistL){
-    Serial.println("Setting new positions");
+    //Serial.println("Setting new positions");
     topStringL = topStringN;
     bottomStringL = bottomStringN;
     p1DistL = p1DistN;
@@ -270,14 +287,31 @@ void loop() {
     p1.moveTo(p1DistL);
     p2.moveTo(p2DistL);
 
-    Serial.println(p1DistL);
-    Serial.print("P1 currently at ");
-    Serial.println(p1.currentPosition());
+   // Serial.println(p1DistL);
+    //Serial.print("P1 currently at ");
+    //Serial.println(p1.currentPosition());
+   //Serial.print("TOP: ");
+    //Serial.print(topStringL);
+    //Serial.print(" BOTTOM: ");
+    //Serial.println(bottomStringL);
   }
 
-if((millis() % 10000) - gameTime > 2000){
+if((millis() % 10000) - gameTime > 1000){
     gameTime = millis() % 10000;
-  updateGameState();
+    toggle = !toggle;
+
+    /*
+    if(toggle){
+        //Serial.println("Moving to 0,0");
+        calculateStringLengths(0,0);
+    }else{
+        //Serial.println("Moving to 0,200");
+        calculateStringLengths(0,200);
+    }*/
+
+    
+    updateGameState();
+    //calculateStringLengths(0, random(10)*30);
 }
 
 }
@@ -297,74 +331,62 @@ void updateGameState(){
         calculateStringLengths(x, y);
     }*/
 
-    // paddle speeds and bounds
-    const int paddleSpeed = 5;
 
-    // ball movement
-    const int ballSpeedX = 5;
-    const int ballSpeedY = 3;
 
     // ball coordinates and directions
-    static int ballX = WIDTH / 2;
-    static int ballY = HEIGHT / 2;
-    static int ballDirX = 1;
-    static int ballDirY = 1;
 
-    // paddle positions
-    static int paddle1Y = 0; 
-    static int paddle2Y = 0;
-
-    int y = p1DistL;
-    int y_t = p2DistL;
-    paddle1Y = map(y, 0, 500, 0, WIDTH);
-    paddle2Y = map(y_t, 0, 500, WIDTH, 0);
+    int paddle1Y = map(p1DistL, 0, 500, 0, WIDTH);
+    int paddle2Y = map(p2DistL, 0, 500, WIDTH, 0);
 
     // wall collision
-    if (ballX >= WIDTH || ballY <= 0) {
+    if (ballX >= (WIDTH - 30) || ballX <= (0 + 30)) {
         ballSpeedX = -ballSpeedX;
     }
 
     // paddle collision, consider paddle to be 38mm
     if (paddle1Y <= ballX && ballX <= paddle1Y + 38) {
-        ballSpeedy = -ballSpeedy;
+        ballSpeedY = -ballSpeedY;
     }
     
     if (paddle2Y >= ballX && ballX >= paddle2Y - 38) {
-        ballSpeedy = -ballSpeedy;
+        ballSpeedY = -ballSpeedY;
     }
 
     // scoring
     if (ballX < paddle1Y || ballX > paddle1Y + 38) {
         if (ballY <= 0) {
             playerScore++;
-            ballX = WIDTH / 2;
-            ballY = HEIGHT / 2;
-            xSpeed = random(2) == 0 ? 1 : -1;
-            ySpeed = random(2) == 0 ? 1 : -1;
+            ballX = HEIGHT / 2;
+            ballY = WIDTH / 2;
+            ballSpeedX = random(2) == 0 ? 1 : -1;
+            ballSpeedY = random(2) == 0 ? 1 : -1;
         }
     }
 
     if (ballX > paddle2Y || ballX < paddle2Y - 38) {
         if (ballX >= HEIGHT) {
             opponentScore++;
-            ballX = WIDTH / 2;
-            ballY = HEIGHT / 2;
-            xSpeed = random(2) == 0 ? 1 : -1;
-            ySpeed = random(2) == 0 ? 1 : -1;
+            ballX = HEIGHT / 2;
+            ballY = WIDTH / 2;
+            ballSpeedX = random(2) == 0 ? 1 : -1;
+            ballSpeedY = random(2) == 0 ? 1 : -1;
         }
     }
 
+    ballX += ballSpeedX;
+    ballY += ballSpeedY;
+
     // Print ball and paddle positions for debugging
-    Serial.print("Ball: ");
+    /*Serial.print("Ball: ");
     Serial.print(ballX);
     Serial.print(" ");
     Serial.print(ballY);
     Serial.print(" Paddle1: ");
     Serial.print(paddle1Y);
     Serial.print(" Paddle2: ");
-    Serial.println(paddle2Y);
+    Serial.println(paddle2Y);*/
 
-    // calculateStringLengths(0, random(10)*30);
+    calculateStringLengths(ballX, ballY);
 }
 
 void setPlotterMotors(int toop, int bot){
