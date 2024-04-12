@@ -297,6 +297,9 @@ void updateGameState(){
         calculateStringLengths(x, y);
     }*/
 
+
+    
+
     calculateStringLengths(0, random(10)*30);
 }
 
