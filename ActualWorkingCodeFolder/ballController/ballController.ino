@@ -79,6 +79,14 @@ void calculateStringLengths(int x, int y) {
     int topGoal = topStringLength * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION);
     int bottomGoal = bottomStringLength * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION);
 
+    if(topGoal < 0){
+        topGoal = 0;
+    }
+
+    if(bottomGoal < 0){
+        bottomGoal = 0;
+    }
+
     Serial.print("New goals: ");
     Serial.print(topGoal);
     Serial.print(" ");
@@ -211,6 +219,8 @@ void setup() {
 int i = 0;
 int toggle = 0;
 
+int gameTime = 0;
+
 void loop() {
 
   //Move motors
@@ -265,14 +275,16 @@ void loop() {
     Serial.println(p1.currentPosition());
   }
 
-
-
-  //updateGameState();
+if((millis() % 10000) - gameTime > 2000){
+    gameTime = millis() % 10000;
+  updateGameState();
+}
 
 }
 
 
 void updateGameState(){
+    /*
     if (Serial.available() >= 2) {
         int x = Serial.read();
         int y = Serial.read();
@@ -283,7 +295,9 @@ void updateGameState(){
         Serial.println(y);
 
         calculateStringLengths(x, y);
-    }
+    }*/
+
+    calculateStringLengths(0, random(10)*30);
 }
 
 void setPlotterMotors(int toop, int bot){
