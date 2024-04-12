@@ -43,14 +43,15 @@ int p2Encoder = 0;
 #define dirPinP2 8
 
 #define STEPS_PER_REVOLUTION 200
-#define MAXSPEED 200
+#define MAXSPEED 500
 #define ACCELERATION 200
 
-#define DISTANCE_PER_REVOLUTION (15.24 * 3.14159)
+#define DISTANCE_PER_REVOLUTION 80.0
+//(15.24 * 3.14159)
 
 #define startStrLength 238
 
-#define startStep (startStrLength * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION))
+#define startStep (long(startStrLength) * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION))
 
 
 int cycle = 0;
@@ -63,8 +64,8 @@ AccelStepper p2(AccelStepper::DRIVER, stepPinP2, dirPinP2);
 
 
 //Old values
-double topStringL = 0;
-double bottomStringL = 0;
+double topStringL = startStep;
+double bottomStringL = startStep;
 double p2DistL = 0;
 double p1DistL = 0;
 
@@ -76,11 +77,11 @@ double p1DistN = 0;
 
 //GAME VARIABLES
 // ball movement
-int ballSpeedX = 10;
-int ballSpeedY = 10;
+int ballSpeedX = 60;
+int ballSpeedY = 60;
 
-int ballY = HEIGHT / 2;
-int ballX = WIDTH/2;
+long ballY = HEIGHT / 2;
+long ballX = WIDTH / 2;
 
 int playerScore = 0;
 int opponentScore = 0;
@@ -91,8 +92,19 @@ void calculateStringLengths(int x, int y) {
     // Where we flip so that x correspodns to y_real and y corresponds to x_real
     // This orietnation has topStringLength corresponding to motor at (0,0) and bottomStringLength corresponding to motor at (0,gameHeight)
     //X increases from right to left (motor on right) and Y increases from top to bottom
-    int topStringLength = sqrt(x * x + y * y);
-    int bottomStringLength = sqrt((HEIGHT - y) * (HEIGHT - y) + x * x);
+    long topStringLength = sqrt(long(x * x) + long(y * y));
+    long bottomStringLength = sqrt(long((HEIGHT - y) * (HEIGHT - y)) + long(x * x));
+
+  /*
+    Serial.print(topStringLength);
+    Serial.print(" ");
+    Serial.print(bottomStringLength);
+    Serial.println(" ");
+    Serial.print("Constants: ");
+    Serial.print(STEPS_PER_REVOLUTION);
+    Serial.print(" ");
+    Serial.println(DISTANCE_PER_REVOLUTION);
+    */
 
     int topGoal = topStringLength * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION);
     int bottomGoal = bottomStringLength * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION);
@@ -105,10 +117,17 @@ void calculateStringLengths(int x, int y) {
         bottomGoal = 0;
     }
 
-    //Serial.print("New goals: ");
-    //Serial.print(topGoal);
-    //Serial.print(" ");
-    //Serial.println(bottomGoal);
+    /*
+
+    Serial.print(x);
+    Serial.print(" ");
+    Serial.print(y);
+    Serial.println(" ");
+    Serial.print("New goals: ");
+    Serial.print(topGoal);
+    Serial.print(" ");
+    Serial.println(bottomGoal);
+    */
 
     setPlotterMotors(topGoal, bottomGoal);
 }
@@ -223,9 +242,25 @@ void setup() {
   p2.setMaxSpeed(MAXSPEED);          // Max speed in steps per second, adjust as necessary
   p2.setAcceleration(ACCELERATION);  // Adjust as necessary to smooth out the movement
 
+  /*
+  Serial.println("START STEP!!!");
+  Serial.print(startStep);
+  Serial.print(long(startStrLength * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION)));
+  Serial.print(long(startStrLength) * STEPS_PER_REVOLUTION);
+  Serial.println("Start String Length");
+  Serial.print(startStrLength);
+  Serial.println("Steps Per Revolution");
+  Serial.print(STEPS_PER_REVOLUTION);
+  Serial.println("Distance Per Revolution");
+  Serial.print(DISTANCE_PER_REVOLUTION);
+  */
+
   // Optionally reset the position to zero at startup
   top.setCurrentPosition(startStep);
-  bottom.setCurrentPosition(-1*startStep);
+  bottom.setCurrentPosition(startStep);
+  //  top.setCurrentPosition(0);
+  //bottom.setCurrentPosition(0);
+
   p1.setCurrentPosition(0);
   p2.setCurrentPosition(0);
 
@@ -245,7 +280,6 @@ void loop() {
   bottom.run();
   p1.run();
   p2.run();
-
 
 /*
   if((millis() % 10000) - i > 1000){
@@ -274,6 +308,43 @@ void loop() {
 }*/
   
   //Update goals
+  //Split into separate and add the below into each
+  /* if (top.distanceToGo() == 0 && top.currentPosition() == 200) {
+    Serial.print("Reached Position 200: ");
+    Serial.println(top.currentPosition());
+    top.moveTo(0); // Set the next target to 0 steps
+    bottom.moveTo(0);
+    p1.moveTo(0);
+    p2.moveTo(0);*/
+  // }
+
+  /*
+
+  if (topStringN != topStringL) {
+    if (top.distanceToGo() == 0 && top.currentPosition() == topStringL) {
+        topStringL = topStringN;
+        top.moveTo(topStringL);
+    }
+  }
+  if (bottomStringN != bottomStringL) {
+    if (bottom.distanceToGo() == 0 && bottom.currentPosition() == bottomStringL) {
+        bottomStringL = bottomStringN;
+        bottom.moveTo(bottomStringL);
+    } 
+  }
+  if (p1DistN != p1DistL) {
+    if (p1.distanceToGo() == 0 && p1.currentPosition() == p1DistL) {
+        p1DistL = p1DistN;
+        p1.moveTo(p1DistL);
+    } 
+  }
+  if (p2DistN != p2DistL) {
+    if (p2.distanceToGo() == 0 && p2.currentPosition() == p2DistL) {
+        p2DistL = p2DistN;
+        p2.moveTo(p2DistL);
+    } 
+  }
+  */
   if(topStringN != topStringL || bottomStringN != bottomStringL || p1DistN != p1DistL || p2DistN != p2DistL){
     //Serial.println("Setting new positions");
     topStringL = topStringN;
@@ -282,6 +353,7 @@ void loop() {
     p2DistL = p2DistN;
 
     top.moveTo(topStringL);
+
     bottom.moveTo(bottomStringL);
 
     p1.moveTo(p1DistL);
@@ -290,15 +362,30 @@ void loop() {
    // Serial.println(p1DistL);
     //Serial.print("P1 currently at ");
     //Serial.println(p1.currentPosition());
-   //Serial.print("TOP: ");
-    //Serial.print(topStringL);
-    //Serial.print(" BOTTOM: ");
-    //Serial.println(bottomStringL);
+   Serial.print("TOP: ");
+    Serial.print(topStringL);
+    Serial.print(" BOTTOM: ");
+    Serial.println(bottomStringL);
   }
 
-if((millis() % 10000) - gameTime > 1000){
+if((millis() % 10000) - gameTime > 2000){
     gameTime = millis() % 10000;
-    toggle = !toggle;
+
+    
+    toggle = (toggle+1) % 2;
+    //p1.moveTo(200*toggle);
+
+    Serial.print("Top String pos: ");
+    Serial.println(top.currentPosition());
+
+    Serial.print("Bot String Pos: ");
+    Serial.println(bottom.currentPosition());
+
+    // if (toggle) {
+    //   calculateStringLengths(30,30);
+    // } else {
+    //   calculateStringLengths(300, 300);
+    // }
 
     /*
     if(toggle){
@@ -310,8 +397,26 @@ if((millis() % 10000) - gameTime > 1000){
     }*/
 
     
-    updateGameState();
-    //calculateStringLengths(0, random(10)*30);
+
+    // if(toggle == 0){
+    //   calculateStringLengths(50, 50);
+    // }else if(toggle == 1){
+    //   calculateStringLengths(50, HEIGHT-50);
+    // }else if(toggle == 2){
+    //   calculateStringLengths(WIDTH - 50, HEIGHT - 50);
+    // }else if(toggle == 3){
+    //   calculateStringLengths(WIDTH - 50, 50);
+    // }
+
+    // calculateStringLengths(30, 30);
+    //calculateStringLengths(30, HEIGHT - 30);
+    // calculateStringLengths(WIDTH - 30, HEIGHT - 30);
+    // calculateStringLengths(WIDTH - 30, 30);
+
+    //calculateStringLengths((WIDTH / 2), (HEIGHT / 2) + 100);
+    calculateStringLengths((random(10)*35), random(10)*35);
+    //updateGameState();
+    // calculateStringLengths(0, random(10)*30);
 }
 
 }
@@ -338,43 +443,63 @@ void updateGameState(){
     int paddle1Y = map(p1DistL, 0, 500, 0, WIDTH);
     int paddle2Y = map(p2DistL, 0, 500, WIDTH, 0);
 
-    // wall collision
-    if (ballX >= (WIDTH - 30) || ballX <= (0 + 30)) {
-        ballSpeedX = -ballSpeedX;
-    }
+    // wall collision (tried to hard-code the parities so as to avoid any issues w/ invert)
+    // if (ballX <= (0 + 15)) {
+    //     ballSpeedX = 60;
+    //     //ballSpeedY = 60;
+    // }
+
+    // if (ballX >= (WIDTH - 15)) {
+    //   ballSpeedX = -60;
+    //   //ballSpeedY = -60;
+    // }
 
     // paddle collision, consider paddle to be 38mm
     if (paddle1Y <= ballX && ballX <= paddle1Y + 38) {
-        ballSpeedY = -ballSpeedY;
+        ballSpeedY = 60;
+        //ballSpeedX = 60;
     }
     
     if (paddle2Y >= ballX && ballX >= paddle2Y - 38) {
-        ballSpeedY = -ballSpeedY;
+        ballSpeedY = -60;
+        //ballSpeedX = -60;
     }
 
     // scoring
     if (ballX < paddle1Y || ballX > paddle1Y + 38) {
-        if (ballY <= 0) {
+        if (ballY <= 20) {
             playerScore++;
+            Serial.println("SCORE");
+            Serial.print(playerScore);
             ballX = HEIGHT / 2;
             ballY = WIDTH / 2;
-            ballSpeedX = random(2) == 0 ? 1 : -1;
-            ballSpeedY = random(2) == 0 ? 1 : -1;
+            //ballSpeedX = random(2) == 0 ? 1 : -1;
+            //ballSpeedY = random(2) == 0 ? 1 : -1;
         }
     }
 
     if (ballX > paddle2Y || ballX < paddle2Y - 38) {
-        if (ballX >= HEIGHT) {
+        if (ballX >= HEIGHT-29) {
             opponentScore++;
+            Serial.println("SCORE");
+            Serial.print(playerScore);
             ballX = HEIGHT / 2;
             ballY = WIDTH / 2;
-            ballSpeedX = random(2) == 0 ? 1 : -1;
-            ballSpeedY = random(2) == 0 ? 1 : -1;
+            //ballSpeedX = random(2) == 0 ? 1 : -1;
+            //ballSpeedY = random(2) == 0 ? 1 : -1;
         }
     }
+    Serial.print("BallX: ");
+    Serial.print(ballX);
+    Serial.print(" BallY: ");
+    Serial.println(ballY);
+    Serial.print("BallX speed: ");
+    Serial.print(ballSpeedX);
+    Serial.print(" BallY speed: ");
+    Serial.println(ballSpeedY);
 
-    ballX += ballSpeedX;
-    ballY += ballSpeedY;
+    // ballX += ballSpeedX;
+    // ballY += ballSpeedY;
 
     // Print ball and paddle positions for debugging
     /*Serial.print("Ball: ");
@@ -385,8 +510,8 @@ void updateGameState(){
     Serial.print(paddle1Y);
     Serial.print(" Paddle2: ");
     Serial.println(paddle2Y);*/
-
-    calculateStringLengths(ballX, ballY);
+    // bottom.moveTo(0);
+    // calculateStringLengths(ballX, ballY * 5);
 }
 
 void setPlotterMotors(int toop, int bot){
