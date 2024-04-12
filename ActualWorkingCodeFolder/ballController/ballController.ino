@@ -297,10 +297,74 @@ void updateGameState(){
         calculateStringLengths(x, y);
     }*/
 
+    // paddle speeds and bounds
+    const int paddleSpeed = 5;
 
+    // ball movement
+    const int ballSpeedX = 5;
+    const int ballSpeedY = 3;
+
+    // ball coordinates and directions
+    static int ballX = WIDTH / 2;
+    static int ballY = HEIGHT / 2;
+    static int ballDirX = 1;
+    static int ballDirY = 1;
+
+    // paddle positions
+    static int paddle1Y = 0; 
+    static int paddle2Y = 0;
+
+    int y = p1DistL;
+    int y_t = p2DistL;
+    paddle1Y = map(y, 0, 500, 0, WIDTH);
+    paddle2Y = map(y_t, 0, 500, WIDTH, 0);
+
+    // wall collision
+    if (ballX >= WIDTH || ballY <= 0) {
+        ballSpeedX = -ballSpeedX;
+    }
+
+    // paddle collision, consider paddle to be 38mm
+    if (paddle1Y <= ballX && ballX <= paddle1Y + 38) {
+        ballSpeedy = -ballSpeedy;
+    }
     
+    if (paddle2Y >= ballX && ballX >= paddle2Y - 38) {
+        ballSpeedy = -ballSpeedy;
+    }
 
-    calculateStringLengths(0, random(10)*30);
+    // scoring
+    if (ballX < paddle1Y || ballX > paddle1Y + 38) {
+        if (ballY <= 0) {
+            playerScore++;
+            ballX = WIDTH / 2;
+            ballY = HEIGHT / 2;
+            xSpeed = random(2) == 0 ? 1 : -1;
+            ySpeed = random(2) == 0 ? 1 : -1;
+        }
+    }
+
+    if (ballX > paddle2Y || ballX < paddle2Y - 38) {
+        if (ballX >= HEIGHT) {
+            opponentScore++;
+            ballX = WIDTH / 2;
+            ballY = HEIGHT / 2;
+            xSpeed = random(2) == 0 ? 1 : -1;
+            ySpeed = random(2) == 0 ? 1 : -1;
+        }
+    }
+
+    // Print ball and paddle positions for debugging
+    Serial.print("Ball: ");
+    Serial.print(ballX);
+    Serial.print(" ");
+    Serial.print(ballY);
+    Serial.print(" Paddle1: ");
+    Serial.print(paddle1Y);
+    Serial.print(" Paddle2: ");
+    Serial.println(paddle2Y);
+
+    // calculateStringLengths(0, random(10)*30);
 }
 
 void setPlotterMotors(int toop, int bot){
