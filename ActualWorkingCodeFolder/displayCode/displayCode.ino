@@ -89,11 +89,17 @@ double bottomStringL = startStep;
 double p2DistL = 0;
 double p1DistL = 0;
 
+double lowL = 0;
+double highL = 0;
+
 //New values
 double topStringN = 0;
 double bottomStringN = 0;
 double p2DistN = 0;
 double p1DistN = 0;
+
+double lowN = 0;
+double highN = 0;
 
 //GAME VARIABLES
 // ball movement
@@ -204,29 +210,6 @@ void paddle2_value(){
     init2 = new2;
 }
 
-void low_value(){
-    int newlow = digitalRead(CLKLOW);
-    if (init1Low != newlow) {
-        if (digitalRead(DTLOW) != newlow) {
-            p1EncoderLow++;
-        } else {
-            p1EncoderLow--;
-        }
-    }
-    init1Low = newlow;
-}
-
-void high_value(){
-    int newhigh = digitalRead(CLKHIGH);
-    if (init1High != newhigh) {
-        if (digitalRead(DTHIGH) != newhigh) {
-            p2EncoderHigh++;
-        } else {
-            p2EncoderHigh--;
-        }
-    }
-    init2High = newhigh;
-}
 
 void button_press1() {
     int buttonVal = digitalRead(SW1);
@@ -308,6 +291,9 @@ void setup() {
   p1.setCurrentPosition(0);
   p2.setCurrentPosition(0);
 
+  top.moveTo(200);
+  bottom.moveTo(-200);
+
   //calculateStringLengths(0,100);    
 }
 
@@ -317,6 +303,10 @@ int toggle = 0;
 
 int gameTime = 0;
 
+int coordToRot(double coord){
+    return coord * STEPS_PER_REVOLUTION * (1/DISTANCE_PER_REVOLUTION);
+}
+
 void loop() {
 
   //Move motors
@@ -324,6 +314,32 @@ void loop() {
   bottom.run();
   p1.run();
   p2.run();
+
+  if((millis() % 10000) - i > 5000){
+    i = millis() % 10000;
+
+    if(toggle == 0){
+        top.moveTo(800);
+        bottom.moveTo(100);
+    }
+
+    if(toggle == 1){
+        top.moveTo(1100);
+        bottom.moveTo(900);
+    }
+
+    if(toggle == 2){
+        top.moveTo(300);
+        bottom.moveTo(100);
+    }
+
+    if(toggle == 3){
+        top.moveTo(200);
+        bottom.moveTo(-200);
+    }
+
+    toggle = (toggle + 1) % 3;
+  }
 
 /*
   if((millis() % 10000) - i > 1000){
@@ -389,16 +405,20 @@ void loop() {
     } 
   }
   */
-  if(topStringN != topStringL || bottomStringN != bottomStringL || p1DistN != p1DistL || p2DistN != p2DistL){
+ 
+  if(topStringN != topStringL || bottomStringN != bottomStringL || p1DistN != p1DistL || p2DistN != p2DistL || lowN != lowL || highN != highL){
     //Serial.println("Setting new positions");
     topStringL = topStringN;
     bottomStringL = bottomStringN;
     p1DistL = p1DistN;
     p2DistL = p2DistN;
 
-    top.moveTo(topStringL);
+    lowL = lowN;
+    highL = highN;
 
-    bottom.moveTo(bottomStringL);
+    //top.moveTo(topStringL);
+
+   //bottom.moveTo(bottomStringL);
 
     p1.moveTo(p1DistL);
     p2.moveTo(p2DistL);
@@ -406,12 +426,12 @@ void loop() {
    // Serial.println(p1DistL);
     //Serial.print("P1 currently at ");
     //Serial.println(p1.currentPosition());
-   Serial.print("TOP: ");
-    Serial.print(topStringL);
-    Serial.print(" BOTTOM: ");
-    Serial.println(bottomStringL);
+    //Serial.print("TOP: ");
+   // Serial.print(topStringL);
+    //Serial.print(" BOTTOM: ");
+    //Serial.println(bottomStringL);
   }
-
+/*
 if((millis() % 10000) - gameTime > 2000){
     gameTime = millis() % 10000;
 
@@ -458,10 +478,10 @@ if((millis() % 10000) - gameTime > 2000){
     // calculateStringLengths(WIDTH - 30, 30);
 
     //calculateStringLengths((WIDTH / 2), (HEIGHT / 2) + 100);
-    calculateStringLengths((random(10)*35), random(10)*35);
+    //calculateStringLengths((random(10)*35), random(10)*35);
     //updateGameState();
     // calculateStringLengths(0, random(10)*30);
-}
+//}
 
 }
 
