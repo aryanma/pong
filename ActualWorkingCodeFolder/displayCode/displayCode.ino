@@ -27,8 +27,18 @@ unsigned long debounceDelay2 = 0;
 int init1;
 int init2;
 
+// for the motors 
+
+int init1Low;
+
+int init2High;
+
 int p1Encoder = 0;
 int p2Encoder = 0;
+
+int p1EncoderLow;
+
+int p2EncoderHigh;
 
 //GAME STUFF
 #define paddleSpeed 5
@@ -192,6 +202,30 @@ void paddle2_value(){
         //Serial.print("Paddle 2: ");
     }
     init2 = new2;
+}
+
+void low_value(){
+    int newlow = digitalRead(CLKLOW);
+    if (init1Low != newlow) {
+        if (digitalRead(DTLOW) != newlow) {
+            p1EncoderLow++;
+        } else {
+            p1EncoderLow--;
+        }
+    }
+    init1Low = newlow;
+}
+
+void high_value(){
+    int newhigh = digitalRead(CLKHIGH);
+    if (init1High != newhigh) {
+        if (digitalRead(DTHIGH) != newhigh) {
+            p2EncoderHigh++;
+        } else {
+            p2EncoderHigh--;
+        }
+    }
+    init2High = newhigh;
 }
 
 void button_press1() {
